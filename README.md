@@ -8,6 +8,13 @@ install mysql images & setup environment for db server
 docker run --name student-dms -p 3306:3306 -e MYSQL_ROOT_PASSWORD=secret123 -d mysql
 ```
 rename .env.example to .env
+
+install dependencies:
+```bash
+pnpm i
+# or
+npm i
+```
 run the development server:
 ```bash
 npm next dev
