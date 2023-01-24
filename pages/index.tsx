@@ -1,11 +1,151 @@
-import Head from 'next/head'
-import Image from 'next/image'
-import { Inter } from '@next/font/google'
-import styles from '../styles/Home.module.css'
+import { Inter } from "@next/font/google";
+import Head from "next/head";
+import {
+  Address,
+  ProviderRpcClient,
+  TvmException,
+} from "everscale-inpage-provider";
+import { useEffect } from "react";
+const inter = Inter({ subsets: ["latin"] });
+const ever = new ProviderRpcClient();
 
-const inter = Inter({ subsets: ['latin'] })
+async function myApp() {
+  if (!(await ever.hasProvider())) {
+    throw new Error("Extension is not installed");
+  }
+
+  const { accountInteraction } = await ever.requestPermissions({
+    permissions: ["basic", "accountInteraction"],
+  });
+  if (accountInteraction == null) {
+    throw new Error("Insufficient permissions");
+  }
+
+  const selectedAddress = accountInteraction.address;
+  const dePoolAddress = new Address(
+    "0:67aaa766eb4dfdabba221a79cdbad87d9f71ea8ad7b16ba3e0e9b26be415bf84"
+  );
+  // Connect with the Smart Contract:
+  const dePool = new ever.Contract(DePoolAbi, dePoolAddress);
+  const hello = new ever.Contract(helloWalletABI, new Address("0:c019797e94865581234eb9683d325f91e5f68e49851aa81613f461d54467debc"));
+  console.log("Hello Contract",await hello.methods.renderHelloWorld().call());
+  const transaction = await dePool.methods
+    .addOrdinaryStake({
+      stake: "10000000000",
+    })
+    .send({
+      from: selectedAddress,
+      amount: "2050000000",
+      bounce: false,
+    });
+  console.log(transaction);
+
+  try {
+    const output = await dePool.methods
+      .getParticipantInfo({
+        addr: selectedAddress,
+      })
+      .call();
+    console.log(output);
+  } catch (e) {
+    if (e instanceof TvmException) {
+      console.error(e.code);
+    }
+  }
+}
+const helloWalletABI = {
+  "ABI version": 2,
+  header: ["time", "expire"],
+  functions: [
+    {
+      name: "constructor",
+      inputs: [],
+      outputs: [],
+    },
+    {
+      name: "renderHelloWorld",
+      inputs: [],
+      outputs: [{ name: "value0", type: "bytes" }],
+    },
+    {
+      name: "touch",
+      inputs: [],
+      outputs: [],
+    },
+    {
+      name: "getTimestamp",
+      inputs: [],
+      outputs: [{ name: "value0", type: "uint256" }],
+    },
+    {
+      name: "sendValue",
+      inputs: [
+        { name: "dest", type: "address" },
+        { name: "amount", type: "uint128" },
+        { name: "bounce", type: "bool" },
+      ],
+      outputs: [],
+    },
+    {
+      name: "timestamp",
+      inputs: [],
+      outputs: [{ name: "timestamp", type: "uint32" }],
+    },
+  ],
+  data: [],
+  events: [],
+} as const;
+const DePoolAbi = {
+  "ABI version": 2,
+  header: ["time", "expire"],
+  functions: [
+    {
+      name: "addOrdinaryStake",
+      inputs: [{ name: "stake", type: "uint64" }],
+      outputs: [],
+    },
+    {
+      name: "getParticipantInfo",
+      inputs: [{ name: "addr", type: "address" }],
+      outputs: [
+        { name: "total", type: "uint64" },
+        { name: "withdrawValue", type: "uint64" },
+        { name: "reinvest", type: "bool" },
+        { name: "reward", type: "uint64" },
+        { name: "stakes", type: "map(uint64,uint64)" },
+        {
+          components: [
+            { name: "remainingAmount", type: "uint64" },
+            { name: "lastWithdrawalTime", type: "uint64" },
+            { name: "withdrawalPeriod", type: "uint32" },
+            { name: "withdrawalValue", type: "uint64" },
+            { name: "owner", type: "address" },
+          ],
+          name: "vestings",
+          type: "map(uint64,tuple)",
+        },
+        {
+          components: [
+            { name: "remainingAmount", type: "uint64" },
+            { name: "lastWithdrawalTime", type: "uint64" },
+            { name: "withdrawalPeriod", type: "uint32" },
+            { name: "withdrawalValue", type: "uint64" },
+            { name: "owner", type: "address" },
+          ],
+          name: "locks",
+          type: "map(uint64,tuple)",
+        },
+        { name: "vestingDonor", type: "address" },
+        { name: "lockDonor", type: "address" },
+      ],
+    },
+  ],
+  data: [],
+  events: [],
+} as const; // NOTE: `as const` is very important here
 
 export default function Home() {
+  useEffect(() => {}, []);
   return (
     <>
       <Head>
@@ -14,110 +154,10 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={styles.main}>
-        <div className={styles.description}>
-          <p>
-            Get started by editing&nbsp;
-            <code className={styles.code}>pages/index.tsx</code>
-          </p>
-          <div>
-            <a
-              href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              By{' '}
-              <Image
-                src="/vercel.svg"
-                alt="Vercel Logo"
-                className={styles.vercelLogo}
-                width={100}
-                height={24}
-                priority
-              />
-            </a>
-          </div>
-        </div>
-
-        <div className={styles.center}>
-          <Image
-            className={styles.logo}
-            src="/next.svg"
-            alt="Next.js Logo"
-            width={180}
-            height={37}
-            priority
-          />
-          <div className={styles.thirteen}>
-            <Image
-              src="/thirteen.svg"
-              alt="13"
-              width={40}
-              height={31}
-              priority
-            />
-          </div>
-        </div>
-
-        <div className={styles.grid}>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Docs <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Find in-depth information about Next.js features and&nbsp;API.
-            </p>
-          </a>
-
-          <a
-            href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Learn <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Learn about Next.js in an interactive course with&nbsp;quizzes!
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Templates <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Discover and deploy boilerplate example Next.js&nbsp;projects.
-            </p>
-          </a>
-
-          <a
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <h2 className={inter.className}>
-              Deploy <span>-&gt;</span>
-            </h2>
-            <p className={inter.className}>
-              Instantly deploy your Next.js site to a shareable URL
-              with&nbsp;Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+      <div className="test">welcome to blockchain world</div>
+      <button onClick={() => myApp().catch(console.error)}>
+        Connect Wallet & Tranfer some Ever tokens
+      </button>
     </>
-  )
+  );
 }
