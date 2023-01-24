@@ -15,6 +15,21 @@ pnpm i
 # or
 npm i
 ```
+create database:
+![image](https://user-images.githubusercontent.com/95400822/214263215-ac4ce012-0a26-4da0-9f5d-a0dcf2814bd4.png)
+```bash
+# login to db
+mysql -u root -p
+# create db:
+CREATE DATABASE studentdms
+```
+push scheme to database
+```bash
+pnpm prisma db push
+# or
+npx prisma db push
+```
+
 run the development server:
 ```bash
 npm next dev
